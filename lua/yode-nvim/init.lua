@@ -35,7 +35,7 @@ M.yodeNvim = function()
     --vim.cmd('normal gg15j8J')
 end
 
-M.createSeditorFloating = function(firstline, lastline)
+M.createSeditorFloating = function(firstline, lastline, bufnr)
     local log = logging.create('createSeditorFloating')
     log.debug(
         string.format(
@@ -49,6 +49,7 @@ M.createSeditorFloating = function(firstline, lastline)
     local seditorBufferId = createSeditor({
         firstline = firstline,
         lastline = lastline,
+        bufnr = bufnr,
     })
     layout.actions.createFloatingWindow({
         tabId = vim.api.nvim_get_current_tabpage(),
@@ -57,7 +58,7 @@ M.createSeditorFloating = function(firstline, lastline)
     })
 end
 
-M.createSeditorReplace = function(firstline, lastline)
+M.createSeditorReplace = function(firstline, lastline, bufnr)
     local log = logging.create('createSeditorReplace')
     log.debug(
         string.format(
@@ -68,11 +69,15 @@ M.createSeditorReplace = function(firstline, lastline)
         )
     )
 
-    local seditorBufferId = createSeditor({
+    local seditorBufferId, seditorName = createSeditor({
         firstline = firstline,
         lastline = lastline,
+        bufnr = bufnr,
     })
     vim.cmd('b ' .. seditorBufferId)
+
+    vim.b.seditor_info = { bufnr, firstline, lastline, seditorBufferId, seditorName }
+    -- return { firstline, lastline, bufnr, seditorBufferId }
 end
 
 M.goToAlternateBuffer = function(viewportFocusIndicator)
@@ -158,12 +163,21 @@ M.bufferDelete = function()
     local sed = seditors.selectors.getSeditorById(bufId)
     if sed then
         log.debug('deleting seditor buffer and show file buffer', bufId, winId, sed.fileBufferId)
+
+        -- { bufnr, firstline, lastline, seditorBufferId, seditorName }
+        local bi = vim.b.seditor_info
+        local dummy = vim.g.seditor_table
+        dummy[tostring(bi[1])][tostring(bi[4])] = nil
+        vim.g.seditor_table = dummy
+        -- vim.api.nvim_err_writeln("remove seditor_table")
+
         vim.cmd('YodeGoToAlternateBuffer t')
         vim.cmd('bd ' .. bufId)
         return
     end
 
-    vim.cmd('bd')
+    vim.api.nvim_err_writeln("This is not a yode buffer.")
+    -- vim.cmd('bd')
 end
 
 M.onWindowClosed = function(winId)

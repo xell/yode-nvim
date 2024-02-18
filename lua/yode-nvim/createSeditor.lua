@@ -15,7 +15,8 @@ end
 local createSeditor = function(opts)
     local log = logging.create('createSeditor')
 
-    local fileBufferId = vim.fn.bufnr('%')
+    -- local fileBufferId = vim.fn.bufnr('%')
+    local fileBufferId = vim.fn.bufnr(opts.bufnr)
     local text = vim.api.nvim_buf_get_lines(fileBufferId, opts.firstline - 1, opts.lastline, true)
     log.debug(fileBufferId, #text, text[1])
     local startLine = opts.firstline - 1
@@ -57,7 +58,7 @@ local createSeditor = function(opts)
             imap <buffer> <leader>blb <esc>:YodeGoToAlternateBuffer b<cr>
         ]])
     end)
-    return seditorBufferId
+    return seditorBufferId, name
 end
 
 return createSeditor
