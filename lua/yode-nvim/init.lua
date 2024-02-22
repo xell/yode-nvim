@@ -78,6 +78,14 @@ M.createSeditorReplace = function(firstline, lastline, bufnr)
 
     vim.b.seditor_info = { bufnr, firstline, lastline, seditorBufferId, seditorName }
     -- return { firstline, lastline, bufnr, seditorBufferId }
+    -- :au CursorHold <buffer=33>  echo 'hold'
+    vim.api.nvim_create_autocmd({'BufEnter', 'BufWinEnter'},{
+        callback = function()
+            local path = vim.api.nvim_buf_get_name(bufnr):match("(.*/)")
+            vim.cmd.cd(path)
+        end,
+        buffer = seditorBufferId,
+    })
 end
 
 M.goToAlternateBuffer = function(viewportFocusIndicator)
@@ -153,6 +161,10 @@ M.bufferDelete = function()
         vim.api.nvim_get_current_tabpage(),
         { winId = winId }
     )
+
+    vim.api.nvim_clear_autocmds({
+        buffer = bufId,
+    })
 
     if floatWin then
         log.debug('deleting floating window', bufId, winId)
